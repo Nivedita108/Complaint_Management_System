@@ -17,8 +17,9 @@ export default function App() {
     location: ""
   });
 
+  // GET
   const fetchComplaints = async () => {
-    const res = await fetch(`${API}/api/complaints`);
+    const res = await fetch(`${API}/complaints`);
     const data = await res.json();
     setComplaints(data.complaints || []);
   };
@@ -27,12 +28,14 @@ export default function App() {
     fetchComplaints();
   }, []);
 
+  // INPUT
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // CREATE
   const addComplaint = async () => {
-    await fetch(`${API}/api/complaints`, {
+    await fetch(`${API}/complaints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form)
@@ -50,8 +53,9 @@ export default function App() {
     fetchComplaints();
   };
 
+  // UPDATE
   const updateStatus = async (id, status) => {
-    await fetch(`${API}/api/complaints/${id}`, {
+    await fetch(`${API}/complaints/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status })
@@ -60,19 +64,19 @@ export default function App() {
     fetchComplaints();
   };
 
+  // AI
   const analyzeAI = async (complaint) => {
     setLoading(true);
     setAiResult("");
 
     try {
-      const res = await fetch(`${API}/api/ai/analyze`, {
+      const res = await fetch(`${API}/ai/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(complaint)
       });
 
       const data = await res.json();
-
       setAiResult(data.result || data.error || "No response");
     } catch (err) {
       setAiResult("AI request failed");
@@ -84,9 +88,8 @@ export default function App() {
   return (
     <div className="dashboard">
 
-      {/* FORM */}
       <section className="form-section">
-        <h1>Complaint Registration</h1>
+        <h1>Complaint Form</h1>
 
         <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
         <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
@@ -101,10 +104,9 @@ export default function App() {
           placeholder="Description"
         />
 
-        <button onClick={addComplaint}>Submit Complaint</button>
+        <button onClick={addComplaint}>Submit</button>
       </section>
 
-      {/* LIST */}
       <section className="candidate-section">
         <h1>Complaints</h1>
 
@@ -113,7 +115,6 @@ export default function App() {
             <h3>{c.title}</h3>
             <p>{c.description}</p>
             <p className="status">{c.status}</p>
-            <p>{c.location}</p>
 
             <button onClick={() => updateStatus(c._id, "In Progress")}>
               In Progress
@@ -130,7 +131,6 @@ export default function App() {
         ))}
       </section>
 
-      {/* AI */}
       <section className="ai-section">
         <h1>AI Result</h1>
         {loading ? "Analyzing..." : <pre>{aiResult}</pre>}
