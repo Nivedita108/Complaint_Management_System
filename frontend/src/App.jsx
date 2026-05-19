@@ -7,6 +7,7 @@ export default function App() {
   const [complaints, setComplaints] = useState([]);
   const [aiResult, setAiResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -17,7 +18,8 @@ export default function App() {
     location: ""
   });
 
-  // GET
+  const isEmpty = (v) => !v || v.trim() === "";
+
   const fetchComplaints = async () => {
     const res = await fetch(`${API}/complaints`);
     const data = await res.json();
@@ -28,13 +30,23 @@ export default function App() {
     fetchComplaints();
   }, []);
 
-  // INPUT
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // CREATE
   const addComplaint = async () => {
+    setSubmitted(true);
+
+    const invalid =
+      isEmpty(form.name) ||
+      isEmpty(form.email) ||
+      isEmpty(form.title) ||
+      isEmpty(form.description) ||
+      isEmpty(form.category) ||
+      isEmpty(form.location);
+
+    if (invalid) return;
+
     await fetch(`${API}/complaints`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -50,10 +62,10 @@ export default function App() {
       location: ""
     });
 
+    setSubmitted(false);
     fetchComplaints();
   };
 
-  // UPDATE
   const updateStatus = async (id, status) => {
     await fetch(`${API}/complaints/${id}`, {
       method: "PUT",
@@ -64,7 +76,6 @@ export default function App() {
     fetchComplaints();
   };
 
-  // AI
   const analyzeAI = async (complaint) => {
     setLoading(true);
     setAiResult("");
@@ -78,35 +89,97 @@ export default function App() {
 
       const data = await res.json();
       setAiResult(data.result || data.error || "No response");
-    } catch (err) {
+    } catch {
       setAiResult("AI request failed");
     }
 
     setLoading(false);
   };
 
+  const error = (field) => submitted && isEmpty(form[field]);
+
+  const hasError =
+    submitted &&
+    (isEmpty(form.name) ||
+      isEmpty(form.email) ||
+      isEmpty(form.title) ||
+      isEmpty(form.description) ||
+      isEmpty(form.category) ||
+      isEmpty(form.location));
+
   return (
     <div className="dashboard">
 
+      {/* FORM */}
       <section className="form-section">
         <h1>Complaint Form</h1>
 
-        <input name="name" value={form.name} onChange={handleChange} placeholder="Name" />
-        <input name="email" value={form.email} onChange={handleChange} placeholder="Email" />
-        <input name="title" value={form.title} onChange={handleChange} placeholder="Title" />
-        <input name="category" value={form.category} onChange={handleChange} placeholder="Category" />
-        <input name="location" value={form.location} onChange={handleChange} placeholder="Location" />
+        {hasError && (
+          <div className="global-error">
+            ⚠ Please fill all required fields before submitting
+          </div>
+        )}
+
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+          className={error("name") ? "error" : ""}
+        />
+        {error("name") && <small className="error-text">Name is required</small>}
+
+        <input
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email"
+          className={error("email") ? "error" : ""}
+        />
+        {error("email") && <small className="error-text">Email is required</small>}
+
+        <input
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          placeholder="Title"
+          className={error("title") ? "error" : ""}
+        />
+        {error("title") && <small className="error-text">Title is required</small>}
+
+        <input
+          name="category"
+          value={form.category}
+          onChange={handleChange}
+          placeholder="Category"
+          className={error("category") ? "error" : ""}
+        />
+        {error("category") && <small className="error-text">Category is required</small>}
+
+        <input
+          name="location"
+          value={form.location}
+          onChange={handleChange}
+          placeholder="Location"
+          className={error("location") ? "error" : ""}
+        />
+        {error("location") && <small className="error-text">Location is required</small>}
 
         <textarea
           name="description"
           value={form.description}
           onChange={handleChange}
           placeholder="Description"
+          className={error("description") ? "error" : ""}
         />
+        {error("description") && (
+          <small className="error-text">Description is required</small>
+        )}
 
-        <button onClick={addComplaint}>Submit</button>
+        <button onClick={addComplaint}>Submit Complaint</button>
       </section>
 
+      {/* LIST */}
       <section className="candidate-section">
         <h1>Complaints</h1>
 
@@ -131,6 +204,7 @@ export default function App() {
         ))}
       </section>
 
+      {/* AI */}
       <section className="ai-section">
         <h1>AI Result</h1>
         {loading ? "Analyzing..." : <pre>{aiResult}</pre>}
